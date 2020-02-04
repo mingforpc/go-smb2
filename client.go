@@ -461,6 +461,39 @@ func (fs *RemoteFileSystem) Stat(name string) (os.FileInfo, error) {
 	return fi, nil
 }
 
+// Attr get file all attr
+func (fs *RemoteFileSystem) Attr(name string) (FileAllInformationDecoder, error) {
+
+	if isInvalidPath(name, false) {
+		return nil, os.ErrInvalid
+	}
+
+	create := &CreateRequest{
+		SecurityFlags:        0,
+		RequestedOplockLevel: SMB2_OPLOCK_LEVEL_NONE,
+		ImpersonationLevel:   Impersonation,
+		SmbCreateFlags:       0,
+		DesiredAccess:        FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+		FileAttributes:       FILE_ATTRIBUTE_NORMAL,
+		ShareAccess:          FILE_SHARE_READ | FILE_SHARE_WRITE,
+		CreateDisposition:    FILE_OPEN,
+		CreateOptions:        0,
+	}
+
+	f, err := fs.createFile(name, create, true)
+	if err != nil {
+		return nil, &os.PathError{Op: "stat", Path: name, Err: err}
+	}
+
+	info, e1 := f.attr()
+	e2 := f.close()
+	err = multiError(e1, e2)
+	if err != nil {
+		return nil, &os.PathError{Op: "stat", Path: name, Err: err}
+	}
+	return info, nil
+}
+
 func (fs *RemoteFileSystem) Truncate(name string, size int64) error {
 	if isInvalidPath(name, false) {
 		return os.ErrInvalid
@@ -930,20 +963,9 @@ func (f *RemoteFile) Stat() (os.FileInfo, error) {
 }
 
 func (f *RemoteFile) stat() (os.FileInfo, error) {
-	req := &QueryInfoRequest{
-		FileInfoClass:         FileAllInformation,
-		AdditionalInformation: 0,
-		Flags:                 0,
-	}
-
-	infoBytes, err := f.queryInfo(req)
+	info, err := f.attr()
 	if err != nil {
 		return nil, err
-	}
-
-	info := FileAllInformationDecoder(infoBytes)
-	if info.IsInvalid() {
-		return nil, &InvalidResponseError{"broken query info response format"}
 	}
 
 	name := UTF16ToString(info.NameInformation().FileName())
@@ -964,6 +986,26 @@ func (f *RemoteFile) stat() (os.FileInfo, error) {
 		FileAttributes: basic.FileAttributes(),
 		FileName:       name,
 	}, nil
+}
+
+func (f *RemoteFile) attr() (FileAllInformationDecoder, error) {
+	req := &QueryInfoRequest{
+		FileInfoClass:         FileAllInformation,
+		AdditionalInformation: 0,
+		Flags:                 0,
+	}
+
+	infoBytes, err := f.queryInfo(req)
+	if err != nil {
+		return nil, err
+	}
+
+	info := FileAllInformationDecoder(infoBytes)
+	if info.IsInvalid() {
+		return nil, &InvalidResponseError{"broken query info response format"}
+	}
+
+	return info, nil
 }
 
 func (f *RemoteFile) Sync() (err error) {

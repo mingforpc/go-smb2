@@ -206,6 +206,7 @@ func (c SrvCopychunkResponseDecoder) TotalBytesWritten() uint32 {
 	return le.Uint32(c[8:12])
 }
 
+// See detail https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/ca28ec38-f155-4768-81d6-4bfeb8586fc9
 const (
 	FILE_ATTRIBUTE_ARCHIVE             = 0x20
 	FILE_ATTRIBUTE_COMPRESSED          = 0x800
