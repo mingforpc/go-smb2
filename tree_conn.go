@@ -5,7 +5,7 @@ import (
 	"time"
 	"unicode/utf16"
 
-	. "github.com/mingforpc/go-smb2/internal/smb2"
+	. "github.com/mingforpc/go-smb2/smb2"
 )
 
 type treeConn struct {

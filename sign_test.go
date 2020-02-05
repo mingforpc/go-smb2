@@ -7,7 +7,7 @@ import (
 
 	"github.com/mingforpc/go-smb2/internal/crypto/cmac"
 
-	. "github.com/mingforpc/go-smb2/internal/smb2"
+	. "github.com/mingforpc/go-smb2/smb2"
 
 	"testing"
 )

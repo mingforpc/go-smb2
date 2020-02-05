@@ -9,7 +9,7 @@ import (
 	"time"
 
 	. "github.com/mingforpc/go-smb2/internal/erref"
-	. "github.com/mingforpc/go-smb2/internal/smb2"
+	. "github.com/mingforpc/go-smb2/smb2"
 )
 
 // Negotiator contains options for func (*Dialer) Dial.

@@ -1,7 +1,7 @@
 package smb2
 
 import (
-	. "github.com/mingforpc/go-smb2/internal/smb2"
+	. "github.com/mingforpc/go-smb2/smb2"
 )
 
 // client
