@@ -18,3 +18,8 @@ Documentation
 -------------
 
 http://godoc.org/github.com/hirochachacha/go-smb2
+
+
+### MY TODO
+
+* 拆分一个高级接口和低级接口

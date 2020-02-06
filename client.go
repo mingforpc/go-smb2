@@ -190,6 +190,36 @@ func (fs *RemoteFileSystem) Mkdir(name string, perm os.FileMode) error {
 	return nil
 }
 
+// LMkdir Low level mkdir
+func (fs *RemoteFileSystem) LMkdir(name string, desiredAccess uint32) error {
+	if isInvalidPath(name, false) {
+		return os.ErrInvalid
+	}
+
+	req := &CreateRequest{
+		SecurityFlags:        0,
+		RequestedOplockLevel: SMB2_OPLOCK_LEVEL_NONE,
+		ImpersonationLevel:   Impersonation,
+		SmbCreateFlags:       0,
+		DesiredAccess:        desiredAccess,
+		FileAttributes:       FILE_ATTRIBUTE_NORMAL,
+		ShareAccess:          FILE_SHARE_READ | FILE_SHARE_WRITE,
+		CreateDisposition:    FILE_CREATE,
+		CreateOptions:        FILE_DIRECTORY_FILE,
+	}
+
+	f, err := fs.createFile(name, req, false)
+	if err != nil {
+		return &os.PathError{Op: "mkdir", Path: name, Err: err}
+	}
+
+	err = f.close()
+	if err != nil {
+		return &os.PathError{Op: "mkdir", Path: name, Err: err}
+	}
+	return nil
+}
+
 func (fs *RemoteFileSystem) Readlink(name string) (string, error) {
 	if isInvalidPath(name, false) {
 		return "", os.ErrInvalid
@@ -462,7 +492,7 @@ func (fs *RemoteFileSystem) Stat(name string) (os.FileInfo, error) {
 }
 
 // Attr get file all attr
-func (fs *RemoteFileSystem) Attr(name string) (FileAllInformationDecoder, error) {
+func (fs *RemoteFileSystem) Attr(name string, desiredAccess uint32) (FileAllInformationDecoder, error) {
 
 	if isInvalidPath(name, false) {
 		return nil, os.ErrInvalid
@@ -473,7 +503,7 @@ func (fs *RemoteFileSystem) Attr(name string) (FileAllInformationDecoder, error)
 		RequestedOplockLevel: SMB2_OPLOCK_LEVEL_NONE,
 		ImpersonationLevel:   Impersonation,
 		SmbCreateFlags:       0,
-		DesiredAccess:        FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+		DesiredAccess:        desiredAccess,
 		FileAttributes:       FILE_ATTRIBUTE_NORMAL,
 		ShareAccess:          FILE_SHARE_READ | FILE_SHARE_WRITE,
 		CreateDisposition:    FILE_OPEN,
@@ -492,6 +522,37 @@ func (fs *RemoteFileSystem) Attr(name string) (FileAllInformationDecoder, error)
 		return nil, &os.PathError{Op: "stat", Path: name, Err: err}
 	}
 	return info, nil
+}
+
+func (fs *RemoteFileSystem) ReadDir(path string) (fi []os.FileInfo, err error) {
+	if isInvalidPath(path, false) {
+		return nil, os.ErrInvalid
+	}
+
+	create := &CreateRequest{
+		SecurityFlags:        0,
+		RequestedOplockLevel: SMB2_OPLOCK_LEVEL_NONE,
+		ImpersonationLevel:   Impersonation,
+		SmbCreateFlags:       0,
+		DesiredAccess:        FILE_READ_ATTRIBUTES | SYNCHRONIZE | FILE_LIST_DIRECTORY,
+		FileAttributes:       FILE_ATTRIBUTE_NORMAL,
+		ShareAccess:          FILE_SHARE_READ | FILE_SHARE_WRITE,
+		CreateDisposition:    FILE_OPEN,
+		CreateOptions:        0,
+	}
+
+	f, err := fs.createFile(path, create, true)
+	if err != nil {
+		return nil, &os.PathError{Op: "stat", Path: path, Err: err}
+	}
+
+	res, e1 := f.readdir()
+	e2 := f.close()
+	err = multiError(e1, e2)
+	if err != nil {
+		return nil, &os.PathError{Op: "stat", Path: path, Err: err}
+	}
+	return res, nil
 }
 
 func (fs *RemoteFileSystem) Truncate(name string, size int64) error {
