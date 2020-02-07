@@ -1401,6 +1401,23 @@ func (f *RemoteFile) WriteTo(w io.Writer) (n int64, err error) {
 	return copyBuffer(f, w, make([]byte, maxReadSize))
 }
 
+// SetBasicAttr set file basic information
+func (f *RemoteFile) SetBasicInfo(encoder *FileBasicInformationEncoder) (err error) {
+
+	info := &SetInfoRequest{
+		FileInfoClass:         FileBasicInformation,
+		AdditionalInformation: 0,
+		Input:                 encoder,
+	}
+
+	err = f.setInfo(info)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (f *RemoteFile) ioctl(req *IoctlRequest) (input, output []byte, err error) {
 	t := f.fs.newTimer()
 

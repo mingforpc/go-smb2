@@ -494,6 +494,27 @@ func (c FileBasicInformationDecoder) FileAttributes() uint32 {
 	return le.Uint32(c[32:36])
 }
 
+type FileBasicInformationEncoder struct {
+	CreateTime     *Filetime
+	LastAccessTime *Filetime
+	LastWriteTime  *Filetime
+	ChangeTime     *Filetime
+	FileAttributes uint32
+}
+
+func (c *FileBasicInformationEncoder) Size() int {
+	return 40
+}
+
+func (c *FileBasicInformationEncoder) Encode(p []byte) {
+	c.CreateTime.Encode(p[:8])
+	c.LastAccessTime.Encode(p[8:16])
+	c.LastWriteTime.Encode(p[16:24])
+	c.ChangeTime.Encode(p[24:32])
+	le.PutUint32(p[32:36], c.FileAttributes)
+	le.PutUint32(p[36:40], 0)
+}
+
 type FileStandardInformationDecoder []byte
 
 func (c FileStandardInformationDecoder) IsInvalid() bool {
