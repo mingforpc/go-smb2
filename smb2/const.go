@@ -286,7 +286,8 @@ const (
 	FILE_DELETE_CHILD
 	FILE_READ_ATTRIBUTES
 	FILE_WRITE_ATTRIBUTES
-
+)
+const (
 	// for directory
 	FILE_LIST_DIRECTORY = 1 << iota
 	FILE_ADD_FILE
@@ -297,7 +298,8 @@ const (
 	_ // FILE_DELETE_CHILD
 	_ // FILE_READ_ATTRIBUTES
 	_ // FILE_WRITE_ATTRIBUTES
-
+)
+const (
 	// common
 	DELETE                 = 0x10000
 	READ_CONTROL           = 0x20000
@@ -311,6 +313,7 @@ const (
 	GENERIC_WRITE          = 0x40000000
 	GENERIC_READ           = 0x80000000
 )
+
 
 // FileAttributes (from MS-FSCC)
 const (
